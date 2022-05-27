@@ -12,6 +12,9 @@ cd ..
 
 The resulting `TibFormat.oxt` can then be installed as LibreOffice extension. In LibreOffice, use `Tools, Extension Manager..., Add` and select `TibFormat.oxt`. After a restart, a new LibreOffice menu item `Tibetan` is available.
 
+## Documentation
+
+See [Tibetan formatting LibreOffice extension](https://digitaltibetan.github.io/DigitalTibetan/docs/tibetan_formatting_libreoffice_extension.html).
 ## License
 
 (c) Rigpa IT 2008-2011, Eszter Hoffmann, licensed under GPL 3.0.
