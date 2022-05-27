@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Suports" script:language="StarBasic">&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;
+
+Function FixLineLayout (oLCurs As Object, oRCurs As Object)
+  &apos;oLCurs goes from begining of selection and moves along as checing the text
+  &apos;oRCurs stands at end of selection and stays there all the time
+  &apos;oVCurs follows oLCurs, but sits at end of the line as a marker.
+  &apos;  if oLCurs could simply find EndOfLine would be a better solution.
+  &apos;This script assumes that the selected region always begins at the start of a paragraph
+  
+  FixLineLayout = false
+  Dim i, j As Integer
+  Dim oText
+  oText = ThisComponent.getText()
+  If IsNull(oLCurs) Or IsNull(oRCurs) Or IsNull(oText) Then Exit Function
+  If oText.compareRegionEnds(oLCurs, oRCurs) &lt;= 0 Then Exit Function
+  
+  Dim oVCurs						&apos;the view coursor
+  Dim IsParaFirstLine as boolean	&apos;flag for first line in pharagraph
+  Dim IsParaLastLine as boolean		&apos;flag for last line in pharagraph
+  Dim iLastChar						&apos;unicode of last char in a line
+  Dim iFirstChar					&apos;unicode of first char in a (next) line
+  Dim IsLineOk as boolean			&apos;flag for end of line fixed
+  Dim oShadC as object				&apos;a cursor at shad
+  Dim oThsegC as object				&apos;a cursor at thseg
+  Dim flag							&apos;flag for various
+    
+  oVCurs = thisComponent.getCurrentController.getViewCursor
+  IsParaFirstLine = True
+  IsParaLastLine = True
+  
+  Do While oLCurs.goRight(3, false)
+    IsParaFirstLine = IsParaLastLine
+    
+    i = oText.compareRegionEnds(oLCurs, oRCurs)
+    &apos;If went past the end then get out
+    If i &lt;= 0 Then Exit Do
+    
+    oVCurs.gotoRange(oLCurs, false)
+    oVCurs.gotoStartOfLine(false)
+    oLCurs.gotoRange(oVCurs,false)
+    
+    
+    &apos;Replace first shad with rinchen only one syllable before it
+    If Not(IsParaFirstLine) Then
+      &apos; Find first shad and check if it sould be a rinchen or not
+      oShadC = FindNext(oText.createTextCursorByRange(oLCurs), Chr$(3853))
+      oThsegC = FindNext(oText.createTextCursorByRange(oLCurs), Chr$(3851))
+      If Isnull (oShadC) Then
+        goto afterRinchen
+      Else If Not Isnull(oThsegC) Then
+          If NOT EqualUnoObjects( oText, oShadC.getText() ) Then goto afterRinchen
+          If NOT EqualUnoObjects( oText, oThsegC.getText() ) Then goto afterRinchen
+          i = oText.compareRegionEnds(oThsegC, oShadC)
+        Else
+          i = 0
+        End If
+      End If
+      If i &lt; 1 Then		&apos;there is no thseg before the first shad: possibly replace for rinchen
+        oShadC.collapseToStart
+        oShadC.goLeft(1,true)
+        oThsegC = FindNext(oText.createTextCursorByRange(oLCurs), Chr$(3852))
+        If Not Isnull(oThsegC) Then
+          i = oText.compareRegionEnds(oThsegC, oShadC)
+        Else
+          i = 0
+        End If
+        If i &lt; 1 Then	&apos;there is no NBthseg more than one character away before the first shad: possibly replace for rinchen
+          flag = true
+          While flag
+          	&apos;control for ka_space_shad case, while allowing mistyping (space before shad)
+            j = Asc(oShadC.String)
+            Select Case j
+            Case 3904, 3906		&apos;ka or ga
+              if Not DoRinchAfterKa then 
+                goto afterRinchen &apos;don&apos;t replace
+              else		&apos;treat it as simple tibetan character
+                flag = false
+              end if
+            Case 3953 to 3957, 3962 to 3973		&apos;vowles, keep searching
+              flag = true
+            Case 32, 160		&apos;space, keep searching
+              flag = true
+            Case 3901, 3900			&apos;bracet, don&apos;t replace
+              goto afterRinchen
+            Case 0 to 3839, 4050 to 100000		&apos;not tibetan, don&apos;t replace
+              goto afterRinchen
+            Case Else			&apos;anything else
+              flag = flase
+            End Select
+            oShadC.collapseToStart
+            oShadC.goLeft(1,true)  
+          Wend
+          oShadC = FindNext(oText.createTextCursorByRange(oLCurs), Chr$(3853))
+          oShadC.setString(Chr$(3857))			&apos;replace with rinchen
+          oShadC.goRight(1,false)
+          oShadC.goRight(1,true)
+          flag = false
+          While oShadC.String = Chr$(160) or oShadC.String = Chr$(32)	&apos;check for second shad
+            oShadC.CollapseToEnd
+            oShadC.goRight(1,true)
+            If oShadC.String = Chr$(3853) Then 
+              oShadc.setString(Chr$(3857))
+              flag = true
+            End If
+          Wend
+          
+          &apos;find next non_space character. if it&apos;s not a tibetan letter undo rinchen
+          If flag Then
+            oShadC.CollapseToEnd
+            oShadC.goRight(1,true)
+            While oShadC.String = Chr$(160) or oShadC.String = Chr$(32)
+              oShadC.CollapseToEnd
+              oShadC.goRight(1,true)
+            Wend
+          End If
+          If (Len(OshadC.String)) = 0 Then 
+            j = 0
+          Else 
+            j = Asc(oShadC.String)
+          End If
+          If j&lt;3904 or j&gt;3946 Then
+             oShadC.CollapseToEnd
+             ReplaceInRange(oLCurs, oShadC, Chr$(3857), Chr$(3853), false)
+          End If
+        End If
+      End If
+    End If
+    
+    afterRinchen:
+    &apos;move oLCurs to eol
+    oVCurs.gotoEndOfLine(False)
+    oLCurs.gotoRange(oVCurs,false)
+    
+    &apos;check if end of paragraph 
+    oLCurs.goRight(1,true)
+    &apos;oVCurs.gotorange(oLCurs,true)
+    If Len(oLCurs.String) = 0 Then
+      IsParaLastLine = true
+      iLastChar = 13
+      iFirstChar = 0
+      Else If Asc(oLCurs.String) = 13 or oLCurs.String = &quot;&quot; Then
+        IsParaLastLine = true
+        iLastChar = Asc(oLCurs.getString())
+        oLCurs.goRight(1,true)
+        iFirstChar = Asc(oLCurs.getString())
+      Else
+        IsParaLastLine = false
+        iFirstChar = Asc(oLCurs.getString())
+        oLCurs.collapseToStart()
+        oLCurs.goLeft(1,true)
+        iLastChar = Asc(oLCurs.getString())
+      End If
+    End If
+    
+    &apos; Check last Char, if not legal, insert break after last tseg or shad.
+    flag = flase	&apos;no line break inserted
+    If Not IsLineFirstCharGood(iFirstChar) or Not(IsLineEndCharGood(iLastChar)) Then
+      Do While(Not(IsLineFirstCharGood(iFirstChar)))
+        oLCurs.goLeft(1,true)
+        iFirstChar = Asc(oLCurs.getString())
+      Loop
+      iLastChar = iFirstChar
+      Do While (Not(IsLineEndCharGood(iLastChar)))
+        oLCurs.goLeft(1,true)
+        iLastChar = Asc(oLCurs.getString())
+      Loop
+      oLCurs.goRight(1,False)
+      oText.insertControlCharacter(oLCurs, com.sun.star.text.ControlCharacter.LINE_BREAK, False)
+      oLCurs.goLeft(1,false)
+      oLCurs.goLeft(1,true)
+      flag = true	&apos;indicates line break insertion  
+    End If
+    
+    If iLastChar = 160 Then
+    &apos;to fix wrong justification in windows OOo 2.4
+    &apos;replace NBSpace at end of line with normal space
+      If flag Then
+        oLCurs.setString(&quot;&quot;)
+        oLCurs.goRight(1,false)
+        oLCurs.setString(Chr$(8203))
+      Else
+        oLCurs.setstring(Chr$(32))
+      End If
+    End If
+  Loop
+  FixLineLayout = true
+End Function
+
+&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;
+
+Sub ReplaceInRange (oLCurs, oRC, srchstr, replastr, checkForTib)
+&apos;oLCurs a text cursor that marks the start of the region (please note that this will move with the execution
+&apos;    of the sub, and that for some reson effects the position of the original cursor as well ???!!!
+&apos;oRC a text cursor that marks the end of the search region
+&apos;srchstr the string we looking for
+&apos;replastr the string we want to put in place of hte srchstr
+&apos;checkForTib a boolean. if true, the sub will replace only if the previous character is tibetan
+
+  Dim oText, found, isTib, j, flag
+  oText = thisComponent.getText()
+
+  Do 
+    found = FindNext(oLCurs, srchstr)
+    If IsNull(found) Then Exit Do
+    If NOT EqualUnoObjects( oText, found.getText() ) Then Exit Do
+    If oText.compareRegionEnds(found, oRC) &lt; 0 Then Exit Do
+    isTib = true
+    If checkForTib Then
+      flag = true
+      oLCurs.gotoRange(found, false)
+      While flag
+        oLCurs.collapseToStart()
+        oLCurs.goLeft(1,true)
+        j = Asc(oLCurs.String)
+        Select Case j
+        Case 3841 to 4049
+          isTib = true
+          flag = false
+        Case 160, 32, 8203 
+          flag = true
+        Case Else
+          isTib = false
+          flag = flase
+        End Select
+      Wend  
+    End If
+    If isTib Then found.setString(replastr)
+    oLCurs.gotoRange(found, false)
+  Loop
+End Sub
+
+Function FindNext(oTC, srchstr, Optional bRegExp) as Object
+  Dim oSrch
+  oSrch = thisComponent.createSearchDescriptor()
+  oSrch.SearchString = srchstr
+  If Not IsMissing(bRegExp) Then oSrch.SearchRegularExpression = bRegExp
+  FindNext = thisComponent.findNext(oTC, oSrch)
+End Function
+
+Sub ReplaceAll(srchstr, rplstr)
+  Dim oSrch, oDoc
+  
+  oDoc = ThisComponent
+  oSrch = oDoc.createReplaceDescriptor
+  oSrch.SearchString = srchstr
+  oSrch.ReplaceString = rplstr
+  oDoc.replaceAll(oSrch)
+End Sub
+
+&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;
+
+Function IsLineEndCharGood(iChar as integer) as boolean
+  If iChar = 3851 or iChar = 3860 or iChar = 32 or iChar = 8203 _
+     or iChar = 13 or iChar = 3853 or iChar = 3854 or iChar = 10 Then
+   IsLineEndCharGood = true
+  Else If iChar &gt; 3840 and iChar &lt; 4049 Then
+      IsLineEndCharGood = false
+    Else 
+      IsLineEndCharGood = true
+    End If
+  End If
+End Function 
+
+Function IsLineFirstCharGood(iChar as integer) as boolean
+  If iChar = 3851 or iChar = 3852 or iChar = 3853 _
+     or iChar = 3854 or iChar = 3857 or iChar = 3860 _
+     or iChar = 32 or iChar = 160 Then
+   IsLineFirstCharGood = false
+  Else
+   IsLineFirstCharGood = true
+  End If
+End Function 
+
+&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;
+
+
+&apos;******************************************************************
+&apos;               Macros taken from Andrew Pitonyak&apos;s page
+&apos;******************************************************************
+
+&apos;******************************************************************
+&apos;Author: Andrew Pitonyak
+&apos;email:   andrew@pitonyak.org 
+&apos;oDoc is a writer object
+Function IsAnythingSelected(oDoc As Object) As Boolean
+  Dim oSels As Object, oSel As Object, oText As Object, oCursor As Object
+  IsAnythingSelected = False
+  If IsNull(oDoc) Then Exit Function
+  &apos; The current selection in the current controller. 
+  &apos;If there is no current controller, it returns NULL.
+  oSels = oDoc.getCurrentSelection()
+  If IsNull(oSels) Then Exit Function
+  If oSels.getCount() = 0 Then Exit Function
+  If oSels.getCount() &gt; 1 Then 
+    IsAnythingSelected = True
+  Else	&apos;single selection, also cursor blinking
+    oSel = oSels.getByIndex(0)
+    oCursor = oDoc.Text.CreateTextCursorByRange(oSel)
+    If Not oCursor.IsCollapsed() Then IsAnythingSelected = True
+  End If
+End Function
+
+&apos;******************************************************************
+&apos;Author: Andrew Pitonyak
+&apos;email:   andrew@pitonyak.org 
+&apos;oSelection is a text selection or cursor range
+&apos;oText is the text object
+Function GetLeftMostCursor(oSel As Object, oText As Object) As Object
+  Dim oRange As Object, oCursor As Object
+  
+  If oText.compareRegionStarts(oSel.getEnd(), oSel) &gt;= 0 Then
+    oRange = oSel.getEnd()
+  Else
+    oRange = oSel.getStart()
+  End If
+  oCursor = oText.CreateTextCursorByRange(oRange)
+  oCursor.goRight(0, False)
+  GetLeftMostCursor = oCursor
+End Function
+&apos;******************************************************************
+&apos;Author: Andrew Pitonyak
+&apos;email:   andrew@pitonyak.org 
+&apos;oSelection is a text selection or cursor range
+&apos;oText is the text object
+Function GetRightMostCursor(oSel As Object, oText As Object) As Object
+  Dim oRange As Object, oCursor As Object
+  
+  If oText.compareRegionStarts(oSel.getEnd(), oSel) &gt;= 0 Then
+    oRange = oSel.getStart()
+  Else
+    oRange = oSel.getEnd()
+ End If
+  oCursor = oText.CreateTextCursorByRange(oRange)
+  oCursor.goLeft(0, False)
+  GetRightMostCursor = oCursor
+End Function
+
+&apos;******************************************************************
+&apos;Author: Andrew Pitonyak
+&apos;email:   andrew@pitonyak.org 
+&apos;sPrompt : how to ask if should iterate over the entire text
+&apos;oCurs() : Has the return cursors
+&apos;Returns true if should iterate and false if should not
+Function CreateSelectedTextIterator(oDoc As Object, sPrompt As String, oCurs()) As Boolean
+  Dim lSelCount As Long       &apos;Number of selected sections.
+  Dim lWhichSelection As Long &apos;Current selection item.
+
+  Dim oSels  &apos;All of the selections
+  Dim oSel         &apos;A single selection.
+  Dim oLCurs     &apos;Cursor to the left of the current selection.
+  Dim oRCurs     &apos;Cursor to the right of the current selection.
+
+  CreateSelectedTextIterator = True
+  IsAllDoc = false
+  If Not IsAnythingSelected(ThisComponent) Then
+    Dim i%
+    i% = MsgBox(&quot;No text selected!&quot; + Chr(13) + sPrompt, _
+      1 OR 32 OR 256, &quot;Warning&quot;)
+    If i% = 1 Then
+      oLCurs = oDoc.getText().createTextCursor()
+      oLCurs.gotoStart(False)
+      oRCurs = oDoc.getText().createTextCursor()
+      oRCurs.gotoEnd(False)
+      oCurs = DimArray(0, 1)
+      oCurs(0, 0) = oLCurs
+      oCurs(0, 1) = oRCurs
+      IsAllDoc = true
+    Else
+      oCurs = DimArray()
+      CreateSelectedTextIterator = False
+    End If
+  Else
+    oSels = ThisComponent.getCurrentSelection()
+    lSelCount = oSels.getCount()
+    oCurs = DimArray(lSelCount - 1, 1)
+    For lWhichSelection = 0 To lSelCount - 1
+      oSel = oSels.getByIndex(lWhichSelection)
+      REM If I want to know if NO text is selected, I could
+      REM do the following:
+      REM oLCurs = oSel.getText().CreateTextCursorByRange(oSel)
+      REM If oLCurs.isCollapsed() Then ...
+      oLCurs = GetLeftMostCursor(oSel, ThisComponent.getText())
+      oRCurs = GetRightMostCursor(oSel, ThisComponent.getText())
+      oCurs(lWhichSelection, 0) = oLCurs
+      oCurs(lWhichSelection, 1) = oRCurs
+    Next
+  End If
+End Function
+
+&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;
+</script:module>

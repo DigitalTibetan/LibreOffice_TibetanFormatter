@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">REM  *****  BASIC  *****
+
+Dim IsAllDoc as Boolean
+Dim IsAllTib as Boolean
+Dim DoRinchAfterKa as Boolean
+
+Sub Main
+  Dim IsFixed as boolean
+  Dim oCurs(), i%, oLC, oRC, oPEC, oText
+  
+  DoRinchAfterKa = true
+  
+  If Not CreateSelectedTextIterator(ThisComponent, _
+    &quot;Do you want to format the whole document?&quot;, oCurs()) Then Exit Sub
+  oText = thisComponent.getText()
+  For i% = LBOUND(oCurs()) To UBOUND(oCurs())
+    oLC = oCurs(i%, 0)
+    oRC = oCurs(i%, 1)
+    Do While(oText.compareRegionStarts(oLC,oRC)&gt;0)
+      oLC.gotoStartOfParagraph(false)
+      oLC.gotoEndOfParagraph(true)
+      Rem &apos;&apos;&apos;&apos; If we want to end at the cursor selection exactly do this:
+      &apos;If oText.compareRegionEnds(oLC,oRC)&gt;0 Then
+      &apos;  oPEC = oLC.getEnd()
+      &apos;Else
+      &apos;  oPEC = oRC.getEnd()
+      &apos;End If
+      Rem &apos;&apos;&apos;&apos; If we want to go till the end of the paragraph do this:
+      oPEC = oText.createTextCursorByRange(oLC.getEnd())   
+      Rem &apos;&apos;&apos;&apos; Resume here in both cases 
+      oLC.collapseToStart()
+      
+      Rem ********** Replacement for correct formating
+      
+      &apos;rinchen to shad
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3857), Chr$(3853), false)
+      &apos;thseg_shad to NBtsheg_shad
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3851) + Chr$(3853), Chr$(3852) + Chr$(3853), false)
+      &apos;thseg_2shad to NBtsheg_2shad
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3851) + Chr$(3854), Chr$(3852) + Chr$(3854), false)
+      &apos;restore spaces at manual breaks
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(10) + Chr$(8203), Chr$(160), true)
+      &apos;delete manual breaks
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(10), &quot;&quot;, true)
+      If oLC.ParaAdjust = 2 Then
+        oLC.ParaExpandSingleWord = true
+        &apos;space to NBspace
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(32), Chr$(160), true)
+        &apos;delete ZWSP, assuming they are the result of previous formating by this macro
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(8203), &quot;&quot;, true)
+        &apos;insert ZWSP after thseg
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr(3851), Chr$(3851) + Chr$(8203), false)
+      End If
+
+      IsFixed = FixLineLayout (oText.createTextCursorByRange(oLC), oPEC)
+      oLC.gotoEndOfParagraph(false)
+      oLC.goRight(1,false)
+    Loop
+  Next i%
+End Sub
+ 
+Sub RemoveZWSP
+  Dim oCurs(), i%, oLC, oRC, oText
+  If Not CreateSelectedTextIterator(ThisComponent, _
+    &quot;Do you want to remove ZWSPs from the whole document?&quot;, oCurs()) Then Exit Sub
+  If Not IsAnythingSelected(ThisComponent) Then
+    &apos;reserve spaces at manual breaks
+    ReplaceAll (Chr$(10)+Chr$(8203), Chr$(10)+Chr$(8204))
+    &apos;delete ZWSP
+    ReplaceAll (Chr$(8203), &quot;&quot;)
+    &apos;restore space holders at manual breaks
+    ReplaceAll (Chr$(10)+Chr$(8204), Chr$(10)+Chr$(8203)) 
+  Else
+    oText = thisComponent.getText()
+    For i% = LBOUND(oCurs()) To UBOUND(oCurs())
+      oLC = oCurs(i%, 0)
+      oRC = oCurs(i%, 1)
+      oLC.gotoStartOfParagraph(false)
+      oRC.gotoEndOfParagraph(false)
+      &apos;reserve spaces at manual breaks
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oRC, Chr$(10)+Chr$(8203), Chr$(10)+Chr$(8204), true)
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oRC, Chr$(8203), &quot;&quot;, false)
+      ReplaceInRange (oText.createTextCursorByRange(oLC), oRC, Chr$(10)+Chr$(8204), Chr$(10)+Chr$(8203), true)
+    Next i%
+  End If
+End Sub
+
+Sub CorrectLines
+  Dim IsFixed as boolean
+  Dim oCurs(), i%, oLC, oRC, oPEC, oText
+  
+  DoRinchAfterKa = true
+    
+  i% = MsgBox(&quot;Does this document (selection) contains only Tibetan Text?&quot;, _
+      4, &quot;Is Tibetan Only&quot;)
+  If i% = 6 Then
+    IsAllTib = true
+  Else
+    IsAllTib = false
+  End If
+  
+  If Not CreateSelectedTextIterator(ThisComponent, _
+    &quot;Do you want to apply Rinchen Spungs Shad to the whole document?&quot;, oCurs()) Then Exit Sub
+  oText = thisComponent.getText()
+  If IsAllDoc Then
+    oLC = oCurs(0, 0)
+    oRC = oCurs(0, 1)
+    &apos;rinchen to shad
+    ReplaceAll (Chr$(3857), Chr$(3853))
+    &apos;thseg_shad to NBtsheg_shad
+    ReplaceAll (Chr$(3851) + Chr$(3853), Chr$(3852) + Chr$(3853))
+    &apos;thseg_2shad to NBtsheg_2shad
+    ReplaceAll (Chr$(3851) + Chr$(3854), Chr$(3852) + Chr$(3854))
+    &apos;thseg_ZWSP_shad to NBtsheg_shad
+    ReplaceAll (Chr$(3851)+Chr(8203)+Chr$(3853), Chr$(3852) + Chr$(3853))
+    &apos;thseg_ZWSP_2shad to NBtsheg_2shad
+    ReplaceAll (Chr$(3851)+Chr(8203)+Chr$(3854), Chr$(3852) + Chr$(3854))
+    If IsAllTib Then
+      &apos;space to NBspace
+      ReplaceAll (Chr$(32), Chr$(160))
+      &apos;restore spaces at manual breaks
+      ReplaceAll (Chr$(10) + Chr$(8203), Chr$(160))
+      &apos;delete manual breaks
+      ReplaceAll (Chr$(10), &quot;&quot;)      
+    End If
+    For i% = LBOUND(oCurs()) To UBOUND(oCurs())
+      oLC = oCurs(i%, 0)
+      oRC = oCurs(i%, 1)
+      Do While(oText.compareRegionStarts(oLC,oRC)&gt;0)
+        oLC.gotoStartOfParagraph(false)
+        oLC.gotoEndOfParagraph(true)
+        oPEC = oText.createTextCursorByRange(oLC.getEnd())      
+        oLC.collapseToStart()
+        If Not IsAllTib Then
+          &apos;space to NBspace
+          ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(32), Chr$(160), true)
+          &apos;restore spaces at manual breaks
+          ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(10) + Chr$(8203), Chr$(160), true)
+          &apos;delete manual breaks
+          ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(10), &quot;&quot;, true)
+        End If
+        IsFixed = FixLineLayout (oText.createTextCursorByRange(oLC), oPEC)
+        oLC.gotoEndOfParagraph(false)
+        oLC.goRight(1,false)
+      Loop
+    Next i%
+  Else
+    For i% = LBOUND(oCurs()) To UBOUND(oCurs())
+      oLC = oCurs(i%, 0)
+      oRC = oCurs(i%, 1)
+      Do While(oText.compareRegionStarts(oLC,oRC)&gt;0)
+        oLC.gotoStartOfParagraph(false)
+        oLC.gotoEndOfParagraph(true)
+        oPEC = oText.createTextCursorByRange(oLC.getEnd())      
+        oLC.collapseToStart()
+        &apos;rinchen to shad
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3857), Chr$(3853), false)
+        &apos;space to NBspace
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(32), Chr$(160), true)
+        &apos;thseg_shad to NBtsheg_shad
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3851) + Chr$(3853), Chr$(3852) + Chr$(3853), false)
+        &apos;thseg_2shad to NBtsheg_2shad
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3851) + Chr$(3854), Chr$(3852) + Chr$(3854), false)
+        &apos;thseg_ZWSP_shad to NBtsheg_shad
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3851)+Chr(8203)+Chr$(3853), Chr$(3852) + Chr$(3853), false)
+        &apos;thseg_2shad to NBtsheg_2shad
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(3851)+Chr(8203)+Chr$(3854), Chr$(3852) + Chr$(3854), false)
+        &apos;restore spaces at manual breaks
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(10) + Chr$(8203), Chr$(160), true)
+        &apos;delete manual breaks
+        ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(10), &quot;&quot;, true)
+        IsFixed = FixLineLayout (oText.createTextCursorByRange(oLC), oPEC)
+        oLC.gotoEndOfParagraph(false)
+        oLC.goRight(1,false)
+      Loop
+    Next i%
+  End If
+End Sub
+
+Sub JustAll
+  Dim oCurs(), i%, oLC, oRC, oPEC, oText, oDoc
+  oDoc = ThisComponent
+  
+  If Not CreateSelectedTextIterator(oDoc, _
+    &quot;Do you want to insert ZWSPs in the whole document?&quot;, oCurs()) Then Exit Sub
+  If Not IsAnythingSelected(oDoc) Then
+    &apos;space to NBspace
+    &apos;ReplaceAll (Chr$(32), Chr$(160))
+    &apos;reserve spaces at manual breaks
+    ReplaceAll (Chr$(10)+Chr$(8203), Chr$(10)+Chr$(8204))
+    &apos;delete other ZWSP, assuming they are the result of previous formating by this macro
+    ReplaceAll (Chr$(8203), &quot;&quot;)
+    &apos;restore space holders at manual breaks
+    ReplaceAll (Chr$(10)+Chr$(8204), Chr$(10)+Chr$(8203))
+    &apos;insert ZWSP after thseg
+    ReplaceAll (Chr(3851), Chr$(3851) + Chr$(8203))
+    
+    oLC = oDoc.getText().createTextCursor()
+    oLC.gotoStart(False)
+    oRC = oDoc.getText().createTextCursor()
+    oRC.gotoEnd(False)
+    While oDoc.getText().compareRegionEnds(oLC,oRC) &gt; 0
+      If oLC.ParaAdjust = 2 Then oLC.ParaExpandSingleWord = true
+      oLC.gotoEndOfParagraph(false)
+      oLC.goRight(2,false)
+    Wend
+  Else
+    oText = thisComponent.getText()
+    For i% = LBOUND(oCurs()) To UBOUND(oCurs())
+      oLC = oCurs(i%, 0)
+      oRC = oCurs(i%, 1)
+      oLC.gotoStartOfParagraph(false)
+      oRC.gotoEndOfParagraph(false)
+      Do While(oText.compareRegionStarts(oLC,oRC)&gt;0)
+        oLC.gotoStartOfParagraph(false)
+        oLC.gotoEndOfParagraph(true)
+        oPEC = oText.createTextCursorByRange(oLC.getEnd())   
+        oLC.collapseToStart()
+        If oLC.ParaAdjust = 2 Then
+          oLC.ParaExpandSingleWord = true
+          &apos;space to NBspace
+          ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(32), Chr$(160), true)
+          &apos;delete ZWSP, assuming they are the result of previous formating by this macro
+          ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr$(8203), &quot;&quot;, true)
+          &apos;insert ZWSP after thseg
+          ReplaceInRange (oText.createTextCursorByRange(oLC), oPEC, Chr(3851), Chr$(3851) + Chr$(8203), false)
+        End If
+        oLC.gotoEndOfParagraph(false)
+        oLC.goRight(1,false)
+      Loop        
+    Next i%
+  End If
+End Sub
+
+&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;&apos;
+
+Sub Help
+  MsgBox (&quot;Tibetan Formatter Version 1.1.5 beta&quot; + Chr(13) + &quot;2008 July 05&quot;+ Chr(13) + &quot;Designed by Rigpa IT and Rigpa Shedra&quot; _
+        + Chr(13) + &quot;Helps to format large texts in Tibetan&quot; + Chr(13) + Chr(13) + _
+        &quot;For more information please visit&quot;  + Chr(13) + _
+        &quot;http://www.digitaltibetan.org/index.php?title=Tibetan_Formating_OpenOffice.org_Extension&quot;, _
+        0, &quot;Tibetan Formatter Add-on Help&quot;)
+End Sub
+
+</script:module>

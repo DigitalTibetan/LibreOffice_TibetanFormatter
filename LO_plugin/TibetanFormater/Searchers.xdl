@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="Searchers" dlg:left="155" dlg:top="98" dlg:width="200" dlg:height="159" dlg:closeable="true" dlg:moveable="true" dlg:title="Search for Tibetan typos">
+ <dlg:bulletinboard>
+  <dlg:text dlg:id="lTibShadTib" dlg:tab-index="0" dlg:left="47" dlg:top="17" dlg:width="124" dlg:height="9" dlg:value="Shad not preceded nor followed by space"/>
+  <dlg:button dlg:id="bFind1" dlg:tab-index="6" dlg:left="6" dlg:top="15" dlg:width="33" dlg:height="12" dlg:value="Find Next">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:TibetanFormater.Replacers.ShadNoSpace?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:button dlg:id="bClose" dlg:tab-index="7" dlg:left="164" dlg:top="140" dlg:width="29" dlg:height="12" dlg:value="Close" dlg:toggled="1">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:TibetanFormater.Replacers.CloseSearchers?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:text dlg:id="Label1" dlg:tab-index="8" dlg:left="47" dlg:top="32" dlg:width="124" dlg:height="9" dlg:value="Terma mark not followed by space"/>
+  <dlg:text dlg:id="Label2" dlg:tab-index="9" dlg:left="47" dlg:top="53" dlg:width="124" dlg:height="9" dlg:value="Ka or Ga at end of close followed by shad"/>
+  <dlg:text dlg:id="Label3" dlg:tab-index="10" dlg:left="47" dlg:top="70" dlg:width="124" dlg:height="9" dlg:value="Shad not preceded nor followed by space"/>
+  <dlg:text dlg:id="Label4" dlg:tab-index="11" dlg:left="47" dlg:top="86" dlg:width="124" dlg:height="9" dlg:value="Shad not preceded nor followed by space"/>
+  <dlg:text dlg:id="Label5" dlg:tab-index="12" dlg:left="47" dlg:top="104" dlg:width="124" dlg:height="9" dlg:value="Shad not preceded nor followed by space"/>
+  <dlg:button dlg:id="bFindNext2" dlg:tab-index="1" dlg:left="6" dlg:top="33" dlg:width="33" dlg:height="12" dlg:value="Find Next">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:TibetanFormater.Replacers.TermaNoSpace?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:button dlg:id="bFindNext3" dlg:tab-index="2" dlg:left="6" dlg:top="52" dlg:width="33" dlg:height="12" dlg:value="Find Next">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:TibetanFormater.Replacers.KaGaShad?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:button dlg:id="bFindNext4" dlg:tab-index="3" dlg:left="6" dlg:top="68" dlg:width="33" dlg:height="12" dlg:value="Find Next"/>
+  <dlg:button dlg:id="bFindNext5" dlg:tab-index="4" dlg:left="6" dlg:top="84" dlg:width="33" dlg:height="12" dlg:value="Find Next"/>
+  <dlg:button dlg:id="bFindNext6" dlg:tab-index="5" dlg:left="6" dlg:top="103" dlg:width="33" dlg:height="12" dlg:value="Find Next"/>
+ </dlg:bulletinboard>
+</dlg:window>

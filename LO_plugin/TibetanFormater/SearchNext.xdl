@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="SearchNext" dlg:left="155" dlg:top="98" dlg:width="137" dlg:height="103" dlg:closeable="true" dlg:moveable="true" dlg:title="Shad Without Space">
+ <dlg:bulletinboard>
+  <dlg:button dlg:id="CommandButton3" dlg:tab-index="7" dlg:left="32" dlg:top="63" dlg:width="2" dlg:height="0" dlg:value="CommandButton3"/>
+  <dlg:button dlg:id="Button_OK" dlg:tab-index="5" dlg:left="47" dlg:top="82" dlg:width="35" dlg:height="14" dlg:default="true" dlg:value="OK" dlg:button-type="ok"/>
+  <dlg:button dlg:id="Button_Cancel" dlg:tab-index="6" dlg:left="86" dlg:top="82" dlg:width="35" dlg:height="14" dlg:value="Quit Search" dlg:button-type="cancel"/>
+  <dlg:radiogroup>
+   <dlg:radio dlg:id="obReplace1" dlg:tab-index="0" dlg:left="5" dlg:top="7" dlg:width="95" dlg:height="12" dlg:value="Insert space before shad"/>
+   <dlg:radio dlg:id="obReplace2" dlg:tab-index="1" dlg:left="5" dlg:top="19" dlg:width="95" dlg:height="12" dlg:value="Insert space after shad" dlg:checked="true"/>
+   <dlg:radio dlg:id="obReplace4" dlg:tab-index="3" dlg:left="5" dlg:top="45" dlg:width="95" dlg:height="14" dlg:value="Ignore this, find next"/>
+   <dlg:radio dlg:id="obReplace3" dlg:tab-index="2" dlg:left="5" dlg:top="31" dlg:width="62" dlg:height="14" dlg:value="Replace shad with:"/>
+  </dlg:radiogroup>
+  <dlg:textfield dlg:id="tfRepalce" dlg:tab-index="4" dlg:left="67" dlg:top="31" dlg:width="58" dlg:height="12"/>
+  <dlg:text dlg:id="Label1" dlg:tab-index="8" dlg:left="6" dlg:top="63" dlg:width="13" dlg:height="12" dlg:value="Use"/>
+  <dlg:radiogroup>
+   <dlg:radio dlg:id="obSpace1" dlg:tab-index="9" dlg:left="19" dlg:top="63" dlg:width="50" dlg:height="12" dlg:value="non-breaking /" dlg:checked="true"/>
+   <dlg:radio dlg:id="obSpace2" dlg:tab-index="10" dlg:left="67" dlg:top="63" dlg:width="58" dlg:height="12" dlg:value="breaking spaces."/>
+  </dlg:radiogroup>
+  <dlg:fixedline dlg:id="FixedLine1" dlg:tab-index="11" dlg:left="3" dlg:top="58" dlg:width="122" dlg:height="5"/>
+ </dlg:bulletinboard>
+</dlg:window>

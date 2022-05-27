@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
+  "http://www.w3.org/TR/html4/frameset.dtd">
+
+<html>
+<head>
+<title>www.rodage.org</title>
+</head>
+
+<frameset>
+    <frame src="http://org.rodage.com/gpl-3.0.fr.txt" name="redir">
+
+    <noframes>
+      <p>Original location:
+        <a href="http://org.rodage.com/gpl-3.0.fr.txt">http://org.rodage.com/gpl-3.0.fr.txt</a>
+      </p>
+    </noframes>
+</frameset>
+
+</html>
+
+

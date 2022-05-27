@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<description
+ xmlns="http://openoffice.org/extensions/description/2006"
+ xmlns:dep="http://openoffice.org/extensions/description/2006"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+	
+	<version value="1.1.503"/>
+	
+	<identifier value="org.rigpa.tibFormatter"/>
+	
+	<dependencies>
+		<OpenOffice.org-minimal-version value="2.2" dep:name="OpenOffice.org 2.2"/>
+	</dependencies>
+
+	<registration>
+		<simple-license  accept-by="admin" default-license-id="en" suppress-on-update="true" >
+			<license-text xlink:href="registration/gpl-3.0.txt" lang="en" license-id="en" />
+			<license-text xlink:href="registration/gpl-3.0.fr.txt" lang="fr" />
+			<license-text xlink:href="registration/gplv3-hebrew.txt" lang="he" />
+		</simple-license>
+	</registration>
+</description>

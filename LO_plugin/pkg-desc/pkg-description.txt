@@ -1,0 +1,5 @@
+TibetanFormatter
+Copyright (c) 2008-2011 Rigpa IT 
+
+This extension helps you to format Tibetan text. For more information see http://www.digitaltibetan.org/index.php?title=Tibetan_Formating_OpenOffice.org_Extension
+

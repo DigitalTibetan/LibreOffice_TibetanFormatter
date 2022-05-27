@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="CharRead" script:language="StarBasic">REM  *****  BASIC  *****
+
+REM  *****  BASIC  *****
+
+Sub CharRead
+  Dim oCurs(), i%
+  If Not CreateSelectedTextIterator(ThisComponent, _
+    &quot;Do you want tp read all the document?&quot;, oCurs()) Then Exit Sub
+  For i% = LBOUND(oCurs()) To UBOUND(oCurs())
+    DiplayCharByChar (oCurs(i%, 0), oCurs(i%, 1))
+  Next i%
+End Sub
+
+Sub DiplayCharByChar (oLCurs As Object, oRCurs As Object)
+  Dim i As Integer
+  Dim oText
+
+  oText = oLCurs.getText()
+  If IsNull(oLCurs) Or IsNull(oRCurs) Or IsNull(oText) Then Exit Sub
+  If oText.compareRegionEnds(oLCurs, oRCurs) &lt;= 0 Then Exit Sub
+
+  Dim iThisChar As Integer, j
+  iThisChar = 0
+  oLCurs.goRight(0, False)
+  Do While oLCurs.goRight(1, True)
+    iThisChar = Asc(oLCurs.getString())
+    i = oText.compareRegionEnds(oLCurs, oRCurs)
+    &apos;If went past the end then get out
+    If i &lt; 0 Then Exit Do
+    j = CharMsbx (iThisChar)
+    If j &lt;&gt; 1 Then
+      Exit Do
+    Else
+      oLCurs.goRight(0, False) 
+    End If  
+  Loop
+End Sub
+
+Function CharMsbx (iThisChar)
+  Dim j%
+  j% = MsgBox(&quot;Current character is: &quot; + Chr(13) + Chr(13) + _
+      Chr$(iThisChar) + Chr(13) + &quot; Unicode: #&quot; + Hex(iThisChar) + chr(13), _
+      1 OR 32 OR 256, &quot;Message&quot;)
+  CharMsbx = j%
+End Function
+</script:module>
